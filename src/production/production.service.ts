@@ -110,7 +110,8 @@ export class ProductionService {
     });
   }
 
-  @Cron('55-59 * * * * *')
+  // @Cron('55-59 * * * * *')
+  @Cron('55-59 59 * * * *')
   async saveEveryFiveLastMinute() {
     const message: any = await this.callMessageMqtt();
 
@@ -136,11 +137,15 @@ export class ProductionService {
       const production = new Production();
       production.planning_production_id = planActive.id;
       production.machine_id = planActive.machine.id;
-      production.qty_hour = planActive.qty_per_hour;
+      production.qty_hour = Number(message.qty_hour) * 2;
       production.qty_actual = Number(message.qty_actual) - totalQtyActualBefore;
+      production.status = 9;
+      production.line_stop_total = message.line_stop_total
+        ? Number(message.line_stop_total)
+        : null;
       await this.productionRepository.save(production);
 
-      console.log('run function last 5 second');
+      console.log('run function last 5 second in an hour');
     }
   }
 
