@@ -137,7 +137,7 @@ export class ProductionService {
       const production = new Production();
       production.planning_production_id = planActive.id;
       production.machine_id = planActive.machine.id;
-      production.qty_hour = Number(message.qty_hour) * 2;
+      production.qty_hour = Number(message.qty_hour);
       production.qty_actual = Number(message.qty_actual) - totalQtyActualBefore;
       production.status = 9;
       production.line_stop_total = message.line_stop_total
