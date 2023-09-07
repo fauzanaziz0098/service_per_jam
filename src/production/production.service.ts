@@ -58,7 +58,7 @@ export class ProductionService {
   private subscribeToTopic() {
     const machineId = [1];
     machineId.map((id) => {
-      this.client.subscribe(`MC${id}:TEST:RPA`, { qos: 2 }, (err) => {
+      this.client.subscribe(`MC${id}:PLAN:RPA`, { qos: 2 }, (err) => {
         if (err) {
           console.log(`Error subscribe topic : MC${id}:PLAN:RPA`, err);
         }
