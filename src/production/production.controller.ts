@@ -26,4 +26,9 @@ export class ProductionController {
     console.log(createProductionDto, 'plan stop saved');
     return this.productionService.saveWhileStopped(createProductionDto);
   }
+
+  @Get('last-production')
+  async getLastProduction() {
+    return this.productionService.getLastProduction();
+  }
 }

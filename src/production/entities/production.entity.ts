@@ -12,6 +12,9 @@ export class Production {
   id: number;
 
   @Column({ nullable: true })
+  client_id: string;
+
+  @Column({ nullable: true })
   planning_production_id: number;
 
   @Column({ nullable: true })

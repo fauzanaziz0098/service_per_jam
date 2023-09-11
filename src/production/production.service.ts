@@ -136,6 +136,7 @@ export class ProductionService {
 
       const production = new Production();
       production.planning_production_id = planActive.id;
+      production.client_id = planActive.client_id;
       production.machine_id = planActive.machine.id;
       production.qty_hour = Number(message.qty_hour);
       production.qty_actual = Number(message.qty_actual) - totalQtyActualBefore;
@@ -181,6 +182,7 @@ export class ProductionService {
 
         const production = new Production();
         production.planning_production_id = planActive.id;
+        production.client_id = planActive.client_id;
         production.machine_id = planActive.machine.id;
         production.qty_hour = Number(message.qty_hour);
         production.qty_actual =
@@ -201,5 +203,16 @@ export class ProductionService {
 
   findAll() {
     return this.productionRepository.find();
+  }
+
+  async getLastProduction() {
+    const message: any = await this.callMessageMqtt();
+
+    const lastData = this.productionRepository.findOne({
+      where: { client_id: String(message.clientId) },
+      order: { id: 'DESC' },
+    });
+
+    return lastData;
   }
 }
