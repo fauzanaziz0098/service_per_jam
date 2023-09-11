@@ -26,6 +26,9 @@ export class NotificationWhatsapp {
   @Column({ default: false })
   is_other_10_minutes: boolean;
 
+  @Column({ default: false })
+  is_group: boolean;
+
   @CreateDateColumn()
   created_at: Date;
 

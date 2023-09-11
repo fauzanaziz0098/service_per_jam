@@ -24,6 +24,10 @@ export class NotificationWhatsappService {
     });
 
     if (!existName) {
+      if (createNotificationWhatsappDto.is_group == false) {
+        createNotificationWhatsappDto.contact_number =
+          '+62' + createNotificationWhatsappDto.contact_number;
+      }
       return this.notificationWhatsappRepository.save(
         createNotificationWhatsappDto,
       );
