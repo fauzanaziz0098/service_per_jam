@@ -8,6 +8,7 @@ import { join } from 'path';
 import { AuthModule } from './auth/auth.module';
 import { ProductionModule } from './production/production.module';
 import { ScheduleModule } from '@nestjs/schedule';
+import { NotificationWhatsappModule } from './notification-whatsapp/notification-whatsapp.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 
     AuthModule,
     ProductionModule,
+    NotificationWhatsappModule,
   ],
   controllers: [AppController],
   providers: [AppService],
