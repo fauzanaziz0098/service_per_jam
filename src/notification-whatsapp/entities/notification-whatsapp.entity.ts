@@ -21,12 +21,6 @@ export class NotificationWhatsapp {
   contact_number: string;
 
   @Column({ default: false })
-  planning_machine_end: boolean;
-
-  @Column({ default: false })
-  is_other_10_minutes: boolean;
-
-  @Column({ default: false })
   is_group: boolean;
 
   @CreateDateColumn()
