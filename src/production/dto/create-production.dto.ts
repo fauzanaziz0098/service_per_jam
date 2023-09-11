@@ -10,4 +10,6 @@ export class CreateProductionDto {
   status: number;
 
   line_stop_total: number;
+
+  clientId?: string;
 }

@@ -20,4 +20,10 @@ export class ProductionController {
   findAll() {
     return this.productionService.findAll();
   }
+
+  @Post('stopped')
+  async saveWhileStopped(@Body() createProductionDto: CreateProductionDto) {
+    console.log(createProductionDto, 'plan stop saved');
+    return this.productionService.saveWhileStopped(createProductionDto);
+  }
 }

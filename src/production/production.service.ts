@@ -149,6 +149,56 @@ export class ProductionService {
     }
   }
 
+  async saveWhileStopped(createProductionDto: CreateProductionDto) {
+    console.log(createProductionDto, 'jalan');
+
+    try {
+      const message: any = await this.callMessageMqtt();
+
+      const planActive = await this.getActivePlanAPI(
+        String(createProductionDto.clientId),
+      );
+
+      if (planActive) {
+        const lastProduction = await this.productionRepository
+          .createQueryBuilder('production')
+          .where('planning_production_id =:planActiveId', {
+            planActiveId: planActive.id,
+          })
+          .getMany();
+
+        let totalQtyActualBefore = 0;
+        if (lastProduction.length > 0) {
+          lastProduction
+            .filter(
+              (item) =>
+                moment(item.created_at, 'HH:mm:ss').format('ss') == '59',
+            )
+            .map((item) => {
+              totalQtyActualBefore += +item.qty_actual;
+            });
+        }
+
+        const production = new Production();
+        production.planning_production_id = planActive.id;
+        production.machine_id = planActive.machine.id;
+        production.qty_hour = Number(message.qty_hour);
+        production.qty_actual =
+          Number(message.qty_actual) - totalQtyActualBefore;
+        production.status = 9;
+        production.line_stop_total = message.line_stop_total
+          ? Number(message.line_stop_total)
+          : null;
+
+        await this.productionRepository.save(production);
+        return 'Stopped Plan Saved';
+      }
+    } catch (error) {
+      console.log(error);
+      // throw new HttpException(error, HttpStatus.BAD_REQUEST);
+    }
+  }
+
   findAll() {
     return this.productionRepository.find();
   }
