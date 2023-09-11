@@ -4,13 +4,76 @@ import { UpdateNotificationWhatsappDto } from './dto/update-notification-whatsap
 import { InjectRepository } from '@nestjs/typeorm';
 import { NotificationWhatsapp } from './entities/notification-whatsapp.entity';
 import { Repository } from 'typeorm';
+import * as mqtt from 'mqtt';
+import axios from 'axios';
 
 @Injectable()
 export class NotificationWhatsappService {
+  private client: mqtt.MqttClient;
   constructor(
     @InjectRepository(NotificationWhatsapp)
     private readonly notificationWhatsappRepository: Repository<NotificationWhatsapp>,
-  ) {}
+  ) {
+    this.initializeMqttClient();
+  }
+
+  private initializeMqttClient() {
+    const connectUrl = process.env.MQTT_CONNECTION;
+
+    this.client = mqtt.connect(connectUrl, {
+      clientId: `mqtt_nest_${Math.random().toString(16).slice(3)}`,
+      clean: true,
+      connectTimeout: 4000,
+      username: '',
+      password: '',
+      reconnectPeriod: 1000,
+    });
+
+    this.client.on('connect', () => {
+      console.log('MQTT client connected');
+    });
+
+    this.subscribeToTopic();
+
+    this.client.on('message', (topic, message) => {
+      if (message) {
+        this.sendNotification(JSON.parse(message.toString()));
+      }
+    });
+
+    this.client.on('error', (error) => {
+      console.log('Connection failed:', error);
+    });
+  }
+
+  private subscribeToTopic() {
+    const machineId = [1];
+    machineId.map((id) => {
+      this.client.subscribe(`MC${id}:PLAN:RPA`, { qos: 2 }, (err) => {
+        if (err) {
+          console.log(`Error subscribe topic : MC${id}:PLAN:RPA`, err);
+        }
+      });
+    });
+  }
+
+  async sendNotification(message) {
+    const users = await this.notificationWhatsappRepository.find({
+      where: { client_id: String(message.clientId) },
+    });
+
+    users.map(async (user) => {
+      const token =
+        'iP3ss9y7PvTQZg0YfJqhKYBdKEubqAwCDJuLzoK7AclvRNPtIEJRwHlIc0zLrLTk';
+      const phone = user.contact_number;
+      const messageWa = `From: Matra Hillindo Teknologi \nTo: ${user.contact_name} \nMessage: Testing`;
+      const { data } = await axios.get(
+        `https://jogja.wablas.com/api/send-message?phone=${phone}&message=${encodeURIComponent(
+          messageWa,
+        )}&token=${token}`,
+      );
+    });
+  }
 
   async create(
     createNotificationWhatsappDto: CreateNotificationWhatsappDto,

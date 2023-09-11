@@ -27,8 +27,8 @@ export class ProductionController {
     return this.productionService.saveWhileStopped(createProductionDto);
   }
 
-  @Get('last-production')
-  async getLastProduction() {
-    return this.productionService.getLastProduction();
+  @Get('last-production/:id')
+  async getLastProduction(@Param('id') id: number) {
+    return this.productionService.getLastProduction(+id);
   }
 }

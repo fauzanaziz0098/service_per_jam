@@ -205,11 +205,9 @@ export class ProductionService {
     return this.productionRepository.find();
   }
 
-  async getLastProduction() {
-    const message: any = await this.callMessageMqtt();
-
+  async getLastProduction(id: number) {
     const lastData = this.productionRepository.findOne({
-      where: { client_id: String(message.clientId) },
+      where: { planning_production_id: +id },
       order: { id: 'DESC' },
     });
 
