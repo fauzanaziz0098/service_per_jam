@@ -1,26 +1,93 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { CreateNotificationWhatsappDto } from './dto/create-notification-whatsapp.dto';
 import { UpdateNotificationWhatsappDto } from './dto/update-notification-whatsapp.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { NotificationWhatsapp } from './entities/notification-whatsapp.entity';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class NotificationWhatsappService {
-  create(createNotificationWhatsappDto: CreateNotificationWhatsappDto) {
-    return 'This action adds a new notificationWhatsapp';
+  constructor(
+    @InjectRepository(NotificationWhatsapp)
+    private readonly notificationWhatsappRepository: Repository<NotificationWhatsapp>,
+  ) {}
+
+  async create(
+    createNotificationWhatsappDto: CreateNotificationWhatsappDto,
+    client_id: string,
+  ) {
+    const existName = await this.notificationWhatsappRepository.findOne({
+      where: {
+        contact_name: createNotificationWhatsappDto.contact_name,
+        client_id: client_id,
+      },
+    });
+
+    if (!existName) {
+      return this.notificationWhatsappRepository.save(
+        createNotificationWhatsappDto,
+      );
+    }
+    throw new HttpException('Name already exist!', HttpStatus.BAD_REQUEST);
   }
 
-  findAll() {
-    return `This action returns all notificationWhatsapp`;
+  findAll(client_id: string) {
+    return this.notificationWhatsappRepository.find({
+      where: { client_id: client_id },
+    });
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} notificationWhatsapp`;
+  async findOne(id: number) {
+    const notificationWhatsapp =
+      await this.notificationWhatsappRepository.findOne({
+        where: { id: id },
+      });
+    if (id) {
+      return notificationWhatsapp;
+    }
+    throw new HttpException(
+      'Notification whatsapp not found',
+      HttpStatus.NOT_FOUND,
+    );
   }
 
-  update(id: number, updateNotificationWhatsappDto: UpdateNotificationWhatsappDto) {
-    return `This action updates a #${id} notificationWhatsapp`;
+  async update(
+    id: number,
+    updateNotificationWhatsappDto: UpdateNotificationWhatsappDto,
+  ) {
+    const notificationWhatsapp =
+      await this.notificationWhatsappRepository.findOne({
+        where: { id: id },
+      });
+
+    if (notificationWhatsapp) {
+      await this.notificationWhatsappRepository.update(
+        id,
+        updateNotificationWhatsappDto,
+      );
+      return this.notificationWhatsappRepository.findOne({
+        where: { id: id },
+      });
+    }
+    throw new HttpException(
+      'Notification whatsapp not found',
+      HttpStatus.NOT_FOUND,
+    );
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} notificationWhatsapp`;
+  async remove(id: number) {
+    const notificationWhatsapp =
+      await this.notificationWhatsappRepository.findOne({
+        where: { id: id },
+      });
+
+    if (notificationWhatsapp) {
+      await this.notificationWhatsappRepository.delete(id);
+      return 'Notifcation whatsapp deleted';
+    }
+    throw new HttpException(
+      'Notification whatsapp not found',
+      HttpStatus.NOT_FOUND,
+    );
   }
 }
