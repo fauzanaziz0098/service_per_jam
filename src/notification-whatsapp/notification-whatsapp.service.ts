@@ -6,6 +6,7 @@ import { NotificationWhatsapp } from './entities/notification-whatsapp.entity';
 import { Repository } from 'typeorm';
 import * as mqtt from 'mqtt';
 import axios from 'axios';
+import { VariablePlanningProduction } from 'src/interface/variableProduction.interface';
 
 @Injectable()
 export class NotificationWhatsappService {
@@ -57,7 +58,7 @@ export class NotificationWhatsappService {
     });
   }
 
-  async sendNotification(message) {
+  async sendNotification(message: VariablePlanningProduction) {
     const users = await this.notificationWhatsappRepository.find({
       where: { client_id: String(message.clientId) },
     });
@@ -66,12 +67,31 @@ export class NotificationWhatsappService {
       const token =
         'iP3ss9y7PvTQZg0YfJqhKYBdKEubqAwCDJuLzoK7AclvRNPtIEJRwHlIc0zLrLTk';
       const phone = user.contact_number;
-      const messageWa = `From: Matra Hillindo Teknologi \nTo: ${user.contact_name} \nMessage: Testing`;
-      const { data } = await axios.get(
-        `https://jogja.wablas.com/api/send-message?phone=${phone}&message=${encodeURIComponent(
-          messageWa,
-        )}&token=${token}`,
-      );
+
+      let messageWa = '';
+      let timeOut = 0;
+      if (Number(message.whatsapp) == 1) {
+        messageWa = `From: Matra Hillindo Teknologi \nTo: ${user.contact_name} \nMessage: Testing1`;
+        timeOut = 0;
+      }
+      if (Number(message.whatsapp) == 2) {
+        messageWa = `From: Matra Hillindo Teknologi \nTo: ${user.contact_name} \nMessage: Testing2`;
+        timeOut = 1;
+      }
+      if (Number(message.whatsapp) == 3) {
+        messageWa = `From: Matra Hillindo Teknologi \nTo: ${user.contact_name} \nMessage: Testing3`;
+        timeOut = 2;
+      }
+      if (messageWa != '') {
+        setTimeout(async () => {
+          console.log('send message with timeout', timeOut, 'minute');
+          await axios.get(
+            `https://jogja.wablas.com/api/send-message?phone=${phone}&message=${encodeURIComponent(
+              messageWa,
+            )}&token=${token}`,
+          );
+        }, 60000 * timeOut);
+      }
     });
   }
 

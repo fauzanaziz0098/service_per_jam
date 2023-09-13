@@ -8,4 +8,5 @@ export interface VariablePlanningProduction {
   ShiftName: string[];
   qty_actual: number[];
   qty_hour: number[];
+  whatsapp?: number[];
 }
