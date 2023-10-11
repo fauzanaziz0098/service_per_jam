@@ -55,14 +55,11 @@ export class ProductionService {
   //   });
   // }
 
-  private subscribeToTopic() {
-    const machineId = [1];
-    machineId.map((id) => {
-      this.client.subscribe(`MC${id}:PLAN:RPA`, { qos: 2 }, (err) => {
-        if (err) {
-          console.log(`Error subscribe topic : MC${id}:PLAN:RPA`, err);
-        }
-      });
+  private subscribeToTopic(machineId) {
+    this.client.subscribe(`MC${machineId}:PLAN:RPA`, { qos: 2 }, (err) => {
+      if (err) {
+        console.log(`Error subscribe topic : MC${machineId}:PLAN:RPA`, err);
+      }
     });
   }
 
@@ -80,7 +77,7 @@ export class ProductionService {
     }
   }
 
-  async callMessageMqtt() {
+  async callMessageMqtt(machineId) {
     return new Promise((resolve, reject) => {
       const connectUrl = process.env.MQTT_CONNECTION;
 
@@ -97,7 +94,7 @@ export class ProductionService {
         console.log('MQTT client connected');
       });
 
-      this.subscribeToTopic();
+      this.subscribeToTopic(machineId);
 
       this.client.on('message', (topic, message) => {
         if (message) {
@@ -113,52 +110,54 @@ export class ProductionService {
   // @Cron('55-59 * * * * *')
   @Cron('55-59 59 * * * *')
   async saveEveryFiveLastMinute() {
-    const message: any = await this.callMessageMqtt();
 
-    const planActive = await this.getActivePlanAPI(String(message.clientId));
-    if (planActive) {
-      const lastProduction = await this.productionRepository
-        .createQueryBuilder('production')
-        .where('planning_production_id =:planActiveId', {
-          planActiveId: planActive.id,
-        })
-        .getMany();
-      let totalQtyActualBefore = 0;
-      if (lastProduction.length > 0) {
-        lastProduction
-          .filter(
-            (item) => moment(item.created_at, 'HH:mm:ss').format('ss') == '59',
-          )
-          .map((item) => {
-            totalQtyActualBefore += +item.qty_actual;
-          });
-      }
-
-      const production = new Production();
-      production.planning_production_id = planActive.id;
-      production.client_id = planActive.client_id;
-      production.machine_id = planActive.machine.id;
-      production.qty_hour = Number(message.qty_hour);
-      production.qty_actual = Number(message.qty_actual) - totalQtyActualBefore;
-      production.status = 9;
-      production.line_stop_total = message.line_stop_total
-        ? Number(message.line_stop_total)
-        : null;
-      await this.productionRepository.save(production);
-
-      console.log('run function last 5 second in an hour');
+    const getAllActivePlan = await this.getAllActivePlan()
+    if (getAllActivePlan.length > 0) {
+      getAllActivePlan.map(async(plan) => {
+        
+        const message: any = await this.callMessageMqtt(plan.machine.id);
+    
+        const planActive = await this.getActivePlanAPI(String(message.clientId));
+        if (planActive) {
+          const lastProduction = await this.productionRepository
+            .createQueryBuilder('production')
+            .where('planning_production_id =:planActiveId', {
+              planActiveId: planActive.id,
+            })
+            .getMany();
+          let totalQtyActualBefore = 0;
+          if (lastProduction.length > 0) {
+            lastProduction
+              .filter(
+                (item) => moment(item.created_at, 'HH:mm:ss').format('ss') == '59',
+              )
+              .map((item) => {
+                totalQtyActualBefore += +item.qty_actual;
+              });
+          }
+    
+          const production = new Production();
+          production.planning_production_id = planActive.id;
+          production.client_id = planActive.client_id;
+          production.machine_id = planActive.machine.id;
+          production.qty_hour = Number(message.qty_hour);
+          production.qty_actual = Number(message.qty_actual) - totalQtyActualBefore;
+          production.status = 9;
+          production.line_stop_total = message.line_stop_total
+            ? Number(message.line_stop_total)
+            : null;
+          await this.productionRepository.save(production);
+    
+          console.log('run function last 5 second in an hour');
+        }
+      })
     }
   }
 
-  async saveWhileStopped(createProductionDto: CreateProductionDto) {
-    console.log(createProductionDto, 'jalan');
-
+   async saveWhileStopped(createProductionDto: string, clientId: string) {
+    const planActive = await this.getActivePlanAPI(clientId);
     try {
-      const message: any = await this.callMessageMqtt();
-
-      const planActive = await this.getActivePlanAPI(
-        String(createProductionDto.clientId),
-      );
+      const message: any = await this.callMessageMqtt(planActive.machine.id);
 
       if (planActive) {
         const lastProduction = await this.productionRepository
@@ -212,5 +211,35 @@ export class ProductionService {
     });
 
     return lastData;
+  }
+
+  async dataActive(clientId: string, planning_id: number) {
+    const production = await this.productionRepository.find({
+      where: { client_id: clientId, planning_production_id: planning_id },
+    });
+
+    const productionMap = production.filter(item => (
+      moment(item.created_at).format("ss") == '59'
+    )).map((item) => {
+      return {
+        ...item,
+        time: moment(item.created_at).format('HH:mm:ss'),
+        time_start: `${moment(item.created_at).format('HH')}:00`
+      };
+    }).sort((a, b) => {
+      return a.time.localeCompare(b.time);
+    });
+    return productionMap;
+  }
+
+  async getAllActivePlan() {
+    try {
+      return (
+        await axios.get(`${process.env.SERVICE_PLAN}/planning-production/find-all-active`)
+      ).data.data;
+    } catch (error) {
+      // throw new HttpException('No Active Plan', HttpStatus.NOT_FOUND);
+      return [];
+    }
   }
 }
