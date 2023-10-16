@@ -55,6 +55,21 @@ export class ProductionService {
   //   });
   // }
 
+  private async resetHour(machineId, value) {
+    let message = {
+      Hour: [value]
+    }
+    const sendMessage = JSON.stringify(message)
+    this.client.publish(`MC${machineId}:DR:RPA`,sendMessage,{ qos: 2, retain: true },
+      (error) => {
+        if (error) {
+          console.error('Error publishing message:', error);
+        }
+      },
+    );
+
+  }
+
   private subscribeToTopic(machineId) {
     this.client.subscribe(`MC${machineId}:PLAN:RPA`, { qos: 2 }, (err) => {
       if (err) {
@@ -149,6 +164,12 @@ export class ProductionService {
           await this.productionRepository.save(production);
     
           console.log('run function last 5 second in an hour');
+
+          // reset hour mqtt
+          this.resetHour(planActive.machine.id, true)
+          setTimeout(() => {
+            this.resetHour(planActive.machine.id, false)
+          }, 2000)
         }
       })
     }
@@ -196,7 +217,6 @@ export class ProductionService {
       }
     } catch (error) {
       console.log(error);
-      // throw new HttpException(error, HttpStatus.BAD_REQUEST);
     }
   }
 
@@ -214,22 +234,48 @@ export class ProductionService {
   }
 
   async dataActive(clientId: string, planning_id: number) {
+    // const production = await this.productionRepository.find({
+    //   where: { client_id: clientId, planning_production_id: planning_id },
+    // });
+
+    // const productionMap = production.filter(item => (
+    //   moment(item.created_at).format("ss") == '59'
+    // )).map((item) => {
+    //   return {
+    //     ...item,
+    //     time: moment(item.created_at).format('HH:mm:ss'),
+    //     time_start: `${moment(item.created_at).format('HH')}:00`
+    //   };
+    // }).sort((a, b) => {
+    //   return a.time.localeCompare(b.time);
+    // });
+    // return productionMap;
+
     const production = await this.productionRepository.find({
       where: { client_id: clientId, planning_production_id: planning_id },
     });
-
-    const productionMap = production.filter(item => (
-      moment(item.created_at).format("ss") == '59'
-    )).map((item) => {
-      return {
-        ...item,
-        time: moment(item.created_at).format('HH:mm:ss'),
-        time_start: `${moment(item.created_at).format('HH')}:00`
-      };
-    }).sort((a, b) => {
-      return a.time.localeCompare(b.time);
-    });
-    return productionMap;
+  
+    const productionMap = production
+      .filter(item => moment(item.created_at).format('ss') === '59')
+      .reduce((accumulator: Record<string, any>, item) => { // Specify the type of the accumulator
+        const hour = moment(item.created_at).format('HH');
+        if (!accumulator[hour] || accumulator[hour].time !== '59:59') {
+          accumulator[hour] = {
+            ...item,
+            time: moment(item.created_at).format('HH:mm:ss'),
+            time_start: `${hour}:00`,
+          };
+        }
+        return accumulator;
+      }, {});
+  
+    // Convert the grouped object back to an array
+    const resultArray = Object.values(productionMap);
+  
+    // Sort the result by time
+    resultArray.sort((a, b) => a.time.localeCompare(b.time));
+  
+    return resultArray;
   }
 
   async getAllActivePlan() {
