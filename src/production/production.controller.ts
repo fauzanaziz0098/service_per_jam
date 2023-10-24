@@ -41,4 +41,10 @@ export class ProductionController {
   dataActive(@Req() req: Request, @Param('id') id: number) {
     return this.productionService.dataActive(req?.user['client'], +id);
   }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Get('data-active-new')
+  dataActiveNew(@Req() req: Request) {
+    return this.productionService.dataActiveNew(req?.user['client']);
+  }
 }
