@@ -27,6 +27,7 @@ export class NotificationWhatsappController {
     @Body() createNotificationWhatsappDto: CreateNotificationWhatsappDto,
     @Req() req: Request,
   ) {
+    createNotificationWhatsappDto.client_id = req.user['client']
     return this.notificationWhatsappService.create(
       createNotificationWhatsappDto,
       req.user['client'],

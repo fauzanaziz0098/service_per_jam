@@ -50,9 +50,9 @@ export class NotificationWhatsappService {
   private subscribeToTopic() {
     const machineId = [1];
     machineId.map((id) => {
-      this.client.subscribe(`MC${id}:PLAN:RPA`, { qos: 2 }, (err) => {
+      this.client.subscribe(`MC${id}:NLS:RPA`, { qos: 2 }, (err) => {
         if (err) {
-          console.log(`Error subscribe topic : MC${id}:PLAN:RPA`, err);
+          console.log(`Error subscribe topic : MC${id}:NLS:RPA`, err);
         }
       });
     });
@@ -107,10 +107,9 @@ export class NotificationWhatsappService {
     });
 
     if (!existName) {
-      if (createNotificationWhatsappDto.is_group == false) {
-        createNotificationWhatsappDto.contact_number =
-          '+62' + createNotificationWhatsappDto.contact_number;
-      }
+      createNotificationWhatsappDto.contact_number =
+        '+62' + createNotificationWhatsappDto.contact_number;
+
       return this.notificationWhatsappRepository.save(
         createNotificationWhatsappDto,
       );
@@ -147,6 +146,10 @@ export class NotificationWhatsappService {
         where: { id: id },
       });
 
+      if (updateNotificationWhatsappDto.contact_number != "" && !updateNotificationWhatsappDto.contact_number.includes("+62")) {
+        updateNotificationWhatsappDto.contact_number =
+        '+62' + updateNotificationWhatsappDto.contact_number;
+      }
     if (notificationWhatsapp) {
       await this.notificationWhatsappRepository.update(
         id,

@@ -23,6 +23,18 @@ export class NotificationWhatsapp {
   @Column({ default: false })
   is_group: boolean;
 
+  @Column({default: false})
+  is_line_stops_1: boolean;
+
+  @Column({default: false})
+  is_line_stops_10: boolean;
+
+  @Column({default: false})
+  is_line_stops_20: boolean;
+
+  @Column({default: false})
+  is_line_stops_30: boolean;
+
   @CreateDateColumn()
   created_at: Date;
 

@@ -264,6 +264,10 @@ export class ProductionService {
   private hour = 7;
   async dataActiveNew(clientId: string) {
     const planningMachine = await this.getActivePlanAPI(clientId)
+    
+    if (!planningMachine) {
+      throw new HttpException("No Plan Active Now", HttpStatus.BAD_REQUEST);
+    }
     // Estimation as datetimeout
     const estimation = (planningMachine?.qty_planning * planningMachine?.product?.cycle_time) / 60
     const dateTimeOut = moment(planningMachine.date_time_in).add(estimation, "minute").endOf('hour')
