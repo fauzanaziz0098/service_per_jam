@@ -277,16 +277,16 @@ export class ProductionService {
       if (moment(moment(planningMachine.date_time_in).hour(this.hour).add(value, 'hour'), 'YYYY-MM-DD HH:mm:ss').isBetween(moment(dateTimeIn, 'YYYY-MM-DD HH:mm:ss'), moment(dateTimeOut, 'YYYY-MM-DD HH:mm:ss'))) {
         const Hms = moment(moment(planningMachine.date_time_in).hour(this.hour).minute(0).second(0).add(value, 'hour'), 'HH:mm:ss');
         let totalHour = 0;
-        const startTime = Hms.clone().startOf('hour').format('HH:mm:ss');
-        const endTime = Hms.clone().endOf('hour').format('HH:mm:ss');
+        const startTime = Hms.clone().startOf('hour');
+        const endTime = Hms.clone().endOf('hour');
 
-        if (moment(startTime, 'HH:mm:ss').isSameOrBefore(moment(planningMachine.date_time_in))) {
-          totalHour = moment(endTime, 'HH:mm:ss').add(1, 'second').diff(moment(planningMachine.date_time_in), 'minute');
+        if (moment(startTime).isSameOrBefore(moment(planningMachine.date_time_in))) {
+          totalHour = moment(endTime).add(1, 'second').diff(moment(planningMachine.date_time_in), 'minute');
         } else {
-          if (moment(endTime, 'HH:mm:ss').isSameOrAfter(moment(planningMachine.date_time_out))) {
-            totalHour = moment(planningMachine.date_time_out).diff(moment(startTime, 'HH:mm:ss'), 'minute');
+          if (moment(endTime).isSameOrAfter(moment(planningMachine.date_time_out))) {
+            totalHour = moment(planningMachine.date_time_out).diff(moment(startTime), 'minute');
           } else {
-            totalHour = moment(endTime, 'HH:mm:ss').add(1, 'second').diff(moment(startTime, 'HH:mm:ss'), 'minute');
+            totalHour = moment(endTime).add(1, 'second').diff(moment(startTime), 'minute');
           }
         }
 

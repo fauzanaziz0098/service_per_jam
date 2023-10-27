@@ -7,6 +7,7 @@ import { Repository } from 'typeorm';
 import * as mqtt from 'mqtt';
 import axios from 'axios';
 import { VariablePlanningProduction } from 'src/interface/variableProduction.interface';
+import { VariableNotificationWhatsapp } from 'src/interface/variableNotificationWhatsapp';
 
 @Injectable()
 export class NotificationWhatsappService {
@@ -18,7 +19,7 @@ export class NotificationWhatsappService {
     this.initializeMqttClient();
   }
 
-  private initializeMqttClient() {
+  private async initializeMqttClient() {
     const connectUrl = process.env.MQTT_CONNECTION;
 
     this.client = mqtt.connect(connectUrl, {
@@ -34,63 +35,73 @@ export class NotificationWhatsappService {
       console.log('MQTT client connected');
     });
 
-    this.subscribeToTopic();
+    const getPlanActiveAll = await this.getAllActivePlan()
 
-    this.client.on('message', (topic, message) => {
-      if (message) {
-        this.sendNotification(JSON.parse(message.toString()));
-      }
-    });
+    if (getPlanActiveAll.length != 0) {
+      getPlanActiveAll.map(plan => {
+        this.subscribeToTopic(plan.machine.id);
+        
+        this.client.on('message', (topic, message) => {
+          if (topic.split(":")[0]?.replace("MC", "") == plan.machine.id) {
+            this.sendNotification(JSON.parse(message.toString()), plan.client_id);
+          }
+        });
+      })
+    }
+
 
     this.client.on('error', (error) => {
       console.log('Connection failed:', error);
     });
   }
 
-  private subscribeToTopic() {
-    const machineId = [1];
-    machineId.map((id) => {
-      this.client.subscribe(`MC${id}:NLS:RPA`, { qos: 2 }, (err) => {
-        if (err) {
-          console.log(`Error subscribe topic : MC${id}:NLS:RPA`, err);
-        }
-      });
+  private subscribeToTopic(machineId) {
+    this.client.subscribe(`MC${machineId}:NLS:RPA`, { qos: 2 }, (err) => {
+      if (err) {
+        console.log(`Error subscribe topic : MC${machineId}:NLS:RPA`, err);
+      }
     });
   }
 
-  async sendNotification(message: VariablePlanningProduction) {
+  async getAllActivePlan() {
+    try {
+      return (
+        await axios.get(`${process.env.SERVICE_PLAN}/planning-production/find-all-active`)
+      ).data.data;
+    } catch (error) {
+      // throw new HttpException('No Active Plan', HttpStatus.NOT_FOUND);
+      return [];
+    }
+  }
+
+  async sendNotification(message: VariableNotificationWhatsapp, client_id) {
     const users = await this.notificationWhatsappRepository.find({
-      where: { client_id: String(message.clientId) },
+      where: { client_id: client_id },
     });
 
     users.map(async (user) => {
-      const token =
-        'iP3ss9y7PvTQZg0YfJqhKYBdKEubqAwCDJuLzoK7AclvRNPtIEJRwHlIc0zLrLTk';
+      const token = 'iP3ss9y7PvTQZg0YfJqhKYBdKEubqAwCDJuLzoK7AclvRNPtIEJRwHlIc0zLrLTk';
       const phone = user.contact_number;
 
-      let messageWa = '';
-      let timeOut = 0;
-      if (Number(message.whatsapp) == 1) {
-        messageWa = `From: Matra Hillindo Teknologi \nTo: ${user.contact_name} \nMessage: Testing1`;
-        timeOut = 0;
+      // const lineStop = axios.get(`${process.env.SERVICE_LOSS_TIME}/line-stop/${message.IsActive[0]}/${client_id}`)
+
+      let messageWa = `VISUAL CONTROL SYSTEM RPA
+      \n\n--INFORMASI LINE STOP--
+      \n\nLINE STOP SAAT INI TELAH MENCAPAI *${message.Time[0]} MENIT*
+      \n\nTidak perlu membalas pesan ini, jika ada sesuatu yang terkait dengan sistem hubungi bagian terdekat di tempat anda.
+      \n\nSalam Hormat,
+      \n*PT MATRA HILLINDO TEKNOLOGI*`
+      if (message.Time[0] == 1 && user.is_line_stops_1) {
+        await axios.get(`https://jogja.wablas.com/api/send-message?phone=${phone}&message=${encodeURIComponent(messageWa)}&token=${token}`);
       }
-      if (Number(message.whatsapp) == 2) {
-        messageWa = `From: Matra Hillindo Teknologi \nTo: ${user.contact_name} \nMessage: Testing2`;
-        timeOut = 1;
+      if (message.Time[0] == 10 && user.is_line_stops_10) {
+        await axios.get(`https://jogja.wablas.com/api/send-message?phone=${phone}&message=${encodeURIComponent(messageWa)}&token=${token}`);
       }
-      if (Number(message.whatsapp) == 3) {
-        messageWa = `From: Matra Hillindo Teknologi \nTo: ${user.contact_name} \nMessage: Testing3`;
-        timeOut = 2;
+      if (message.Time[0] == 20 && user.is_line_stops_20) {
+        await axios.get(`https://jogja.wablas.com/api/send-message?phone=${phone}&message=${encodeURIComponent(messageWa)}&token=${token}`);
       }
-      if (messageWa != '') {
-        setTimeout(async () => {
-          console.log('send message with timeout', timeOut, 'minute');
-          await axios.get(
-            `https://jogja.wablas.com/api/send-message?phone=${phone}&message=${encodeURIComponent(
-              messageWa,
-            )}&token=${token}`,
-          );
-        }, 60000 * timeOut);
+      if (message.Time[0] == 30 && user.is_line_stops_30) {
+        await axios.get(`https://jogja.wablas.com/api/send-message?phone=${phone}&message=${encodeURIComponent(messageWa)}&token=${token}`);
       }
     });
   }
