@@ -87,20 +87,20 @@ export class NotificationWhatsappService {
 
       let messageWa = `VISUAL CONTROL SYSTEM RPA
       \n\n--INFORMASI LINE STOP--
-      \n\nLINE STOP SAAT INI TELAH MENCAPAI *${message.Time[0]} MENIT*
+      \n\nLINE STOP SAAT INI TELAH MENCAPAI *${message.TimeLS[0]} MENIT*
       \n\nTidak perlu membalas pesan ini, jika ada sesuatu yang terkait dengan sistem hubungi bagian terdekat di tempat anda.
       \n\nSalam Hormat,
       \n*PT MATRA HILLINDO TEKNOLOGI*`
-      if (message.Time[0] == 1 && user.is_line_stops_1) {
+      if (message.TimeLS[0] == 1 && user.is_line_stops_1) {
         await axios.get(`https://jogja.wablas.com/api/send-message?phone=${phone}&message=${encodeURIComponent(messageWa)}&token=${token}`);
       }
-      if (message.Time[0] == 10 && user.is_line_stops_10) {
+      if (message.TimeLS[0] == 10 && user.is_line_stops_10) {
         await axios.get(`https://jogja.wablas.com/api/send-message?phone=${phone}&message=${encodeURIComponent(messageWa)}&token=${token}`);
       }
-      if (message.Time[0] == 20 && user.is_line_stops_20) {
+      if (message.TimeLS[0] == 20 && user.is_line_stops_20) {
         await axios.get(`https://jogja.wablas.com/api/send-message?phone=${phone}&message=${encodeURIComponent(messageWa)}&token=${token}`);
       }
-      if (message.Time[0] == 30 && user.is_line_stops_30) {
+      if (message.TimeLS[0] == 30 && user.is_line_stops_30) {
         await axios.get(`https://jogja.wablas.com/api/send-message?phone=${phone}&message=${encodeURIComponent(messageWa)}&token=${token}`);
       }
     });

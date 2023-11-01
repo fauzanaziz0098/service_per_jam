@@ -265,9 +265,7 @@ export class ProductionService {
   async dataActiveNew(clientId: string) {
     const planningMachine = await this.getActivePlanAPI(clientId)
     
-    if (!planningMachine) {
-      throw new HttpException("No Plan Active Now", HttpStatus.BAD_REQUEST);
-    }
+    if (planningMachine) {
     // Estimation as datetimeout
     const estimation = (planningMachine?.qty_planning * planningMachine?.product?.cycle_time) / 60
     const dateTimeOut = moment(planningMachine.date_time_in).add(estimation, "minute").endOf('hour')
@@ -484,6 +482,30 @@ export class ProductionService {
     // console.log({all, active, planningMachineActive: planningMachine});
     
     return {all, active, planningMachineActive: planningMachine}
+   } else {
+         const all = (await Promise.all(this.range(0, 23)))?.map((value, key) => {
+            let time = moment().hour(7)?.minute(0).add(key, 'hour').format('HH:mm')
+            let duration = 0
+            let target = 0
+            let actual = 0
+            let percentage = 0
+            let time_start = false
+            return {time, duration, target, actual, percentage,time_start, shift: null}
+         })
+             
+         const active =  await Promise.all(this.range(0, 23)?.map(async value => {
+           const time = moment('00:00', 'HH:mm').minute(0).add(value, 'hour').format('HH:mm')
+           let target = 0
+           let actual = 0
+           const percentage = 0
+           let timeStart = moment('00:00', 'HH:mm').isSame(moment(time, 'HH'))
+           return {time, target, actual, percentage, timeStart, shift: null}
+         }))
+         
+         // console.log({all, active, planningMachineActive: planningMachine});
+         
+         return {all, active, planningMachineActive: planningMachine}
+    }
     
   }
 
