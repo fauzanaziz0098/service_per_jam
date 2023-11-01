@@ -78,12 +78,12 @@ export class ProductionService {
     });
   }
 
-  async getActivePlanAPI(client: string) {
+  async getActivePlanAPI(client: string, machine) {
     try {
       return (
         await axios.post(
           `${process.env.SERVICE_PLAN}/planning-production/active-plan-api`,
-          { client: client },
+          { client: client, machine },
         )
       ).data.data;
     } catch (error) {
@@ -132,7 +132,7 @@ export class ProductionService {
         
         const message: any = await this.callMessageMqtt(plan.machine.id);
     
-        const planActive = await this.getActivePlanAPI(String(message.clientId));
+        const planActive = await this.getActivePlanAPI(String(message.clientId), plan.machine.id);
         if (planActive) {
           const lastProduction = await this.productionRepository
             .createQueryBuilder('production')
@@ -175,8 +175,8 @@ export class ProductionService {
     }
   }
 
-   async saveWhileStopped(createProductionDto: string, clientId: string) {
-    const planActive = await this.getActivePlanAPI(clientId);
+   async saveWhileStopped(createProductionDto: string, clientId: string, machineId) {
+    const planActive = await this.getActivePlanAPI(clientId, machineId);
     try {
       const message: any = await this.callMessageMqtt(planActive.machine.id);
 
@@ -262,8 +262,8 @@ export class ProductionService {
   }
 
   private hour = 7;
-  async dataActiveNew(clientId: string) {
-    const planningMachine = await this.getActivePlanAPI(clientId)
+  async dataActiveNew(clientId: string, machineId) {
+    const planningMachine = await this.getActivePlanAPI(clientId, machineId)
     
     if (planningMachine) {
     // Estimation as datetimeout

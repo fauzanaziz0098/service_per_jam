@@ -26,9 +26,9 @@ export class ProductionController {
   }
 
   @Post('stopped')
-  async saveWhileStopped(@Body('planning_production_id') planningId, @Body('clientId') clientId) {
-    console.log(planningId, clientId, 'plan stop saved');
-    return this.productionService.saveWhileStopped(planningId, clientId);
+  async saveWhileStopped(@Body('planning_production_id') planningId, @Body('clientId') clientId, @Body('machine') machine) {
+    console.log(planningId, clientId, machine, 'plan stop saved');
+    return this.productionService.saveWhileStopped(planningId, clientId, machine);
   }
 
   @Get('last-production/:id')
@@ -43,8 +43,8 @@ export class ProductionController {
   }
 
   @UseGuards(AuthGuard('jwt'))
-  @Get('data-active-new')
-  dataActiveNew(@Req() req: Request) {
-    return this.productionService.dataActiveNew(req?.user['client']);
+  @Get('data-active-new/:machineId')
+  dataActiveNew(@Req() req: Request, @Param('machineId') machineId) {
+    return this.productionService.dataActiveNew(req?.user['client'], machineId);
   }
 }
