@@ -106,6 +106,29 @@ export class NotificationWhatsappService {
     });
   }
 
+  async sendNotificationEndShift(data) {
+    const users = await this.notificationWhatsappRepository.find({
+      where: { client_id: data.client_id },
+    });
+
+    users.map(async (user) => {
+      const token = 'iP3ss9y7PvTQZg0YfJqhKYBdKEubqAwCDJuLzoK7AclvRNPtIEJRwHlIc0zLrLTk';
+      const phone = user.contact_number;
+
+      let messageWa = `**VISUAL CONTROL SYSTEM RPA**
+      \n\n--INFORMASI PLAN SHIFT BERAKHIR--
+      \nQTY ACTUAL = ${data.qtyActual}
+      \nQTY PLAN = ${data.qtyPlan}
+      \nOEE = ${Math.round(data.oee) * 100}
+      \nTOTAL TIME ESTIMATION = ${data.totalTimeEstimation}
+      \nTOTAL TIME ACTUAL = ${data.totalTimeActual}
+      \n\nTidak perlu membalas pesan ini, jika ada sesuatu yang terkait dengan sistem hubungi bagian terdekat di tempat anda.`
+
+      await axios.get(`https://jogja.wablas.com/api/send-message?phone=${phone}&message=${encodeURIComponent(messageWa)}&token=${token}`);
+    });
+    return 'message sent'
+  }
+
   async create(
     createNotificationWhatsappDto: CreateNotificationWhatsappDto,
     client_id: string,

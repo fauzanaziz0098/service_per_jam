@@ -63,4 +63,9 @@ export class NotificationWhatsappController {
   remove(@Param('id') id: string) {
     return this.notificationWhatsappService.remove(+id);
   }
+
+  @Post('end-shift')
+  async sendNotificationEndShift(@Body() data) {
+    return this.notificationWhatsappService.sendNotificationEndShift(data)
+  }
 }
