@@ -291,8 +291,8 @@ export class ProductionService {
         if (totalHour == 59) {
           totalHour = 60;
         }
-
-        const totalNoPlanMachine = planningMachine.shift.no_plan_machine_id.filter(item => (item?.day?.toLowerCase() == moment().format('dddd')?.toLowerCase())).map(noPlanMachine => {
+        const noPlanMachines = (await axios.get(`${process.env.SERVICE_PLAN}/no-plan-machine/no-plan-by-range/${planningMachine.client_id}/${moment(planningMachine.date_time_in).format('HH:mm:ss')}/${dateTimeOut.format('HH:mm:ss')}`))?.data?.data
+        const totalNoPlanMachine = noPlanMachines.filter(item => (item?.day?.toLowerCase() == moment().format('dddd')?.toLowerCase())).map(noPlanMachine => {
           const timeStart = Hms.clone().startOf('hour').format('HH:mm:ss');
           const timeEnd = Hms.clone().endOf('hour').format('HH:mm:ss');
           
@@ -366,7 +366,7 @@ export class ProductionService {
           target = 0.000001;
         }
         let percentage = Math.round(actual / target * 100);
-        let timeStart = moment(moment(planningMachine.date_time_in).format("HH")).isSame(moment(time, 'HH'));
+        let timeStart = moment(moment(planningMachine.date_time_in).format("HH"), 'HH').isSame(moment(time, 'HH'));
         if (actual == 0.000001) {
           actual = 0;
         }
@@ -415,7 +415,8 @@ export class ProductionService {
         totalHour = 60
       }
 
-      const totalNoPlan = planningMachine.shift.no_plan_machine_id?.map(noPlanMachine => {
+      const noPlanMachines = (await axios.get(`${process.env.SERVICE_PLAN}/no-plan-machine/no-plan-by-range/${planningMachine.client_id}/${moment(planningMachine.date_time_in).format('HH:mm:ss')}/${dateTimeOut.format('HH:mm:ss')}`))?.data?.data
+      const totalNoPlan = noPlanMachines?.map(noPlanMachine => {
         const timeStart = Hms.clone().startOf('hour').format('HH:mm:ss')
         const timeEnd = Hms.clone().endOf('hour').format('HH:mm:ss')
         if (moment(noPlanMachine.time_in, 'HH:mm:ss').isBetween(moment(timeStart, 'HH:mm:ss'), moment(timeEnd, 'HH:mm:ss'))) {
@@ -465,7 +466,7 @@ export class ProductionService {
           target = 0.000001;
       }
       const percentage = Math.round(actual / target * 100)
-      let timeStart = moment(moment(planningMachine.date_time_in).format("HH")).isSame(moment(time, 'HH'))
+      let timeStart = moment(moment(planningMachine.date_time_in).format("HH") ,"HH").isSame(moment(time, 'HH'))
       
       if (actual == 0.000001) {
         actual = 0;
@@ -478,8 +479,6 @@ export class ProductionService {
       }
       return {time, target, actual, percentage, timeStart, shift: planningMachine.shift.name}
     }))
-    
-    // console.log({all, active, planningMachineActive: planningMachine});
     
     return {all, active, planningMachineActive: planningMachine}
    } else {
