@@ -310,7 +310,7 @@ export class ProductionService {
                 return (moment(timeEnd, 'HH:mm:ss').add(1, 'second')).diff(moment(noPlanMachine.time_in, 'HH:mm:ss'),'minute');
               }
               if (moment(noPlanMachine.time_out, 'HH:mm:ss').isBetween(moment(timeStart, 'HH:mm:ss'), moment(timeEnd, 'HH:mm:ss'))) {
-                return (moment(noPlanMachine.time_out).diff(moment(timeStart, 'HH:mm:ss')));
+                return (moment(noPlanMachine.time_out, 'HH:mm:ss').diff(moment(timeStart, 'HH:mm:ss'), 'minute'));
               }
                 return 0;
             }
