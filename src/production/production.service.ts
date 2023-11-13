@@ -291,6 +291,10 @@ export class ProductionService {
         if (totalHour == 59) {
           totalHour = 60;
         }
+        // if (totalHour == 60) {
+        //   totalHour = 59;
+        // }
+        
         const noPlanMachines = (await axios.get(`${process.env.SERVICE_PLAN}/no-plan-machine/no-plan-by-range/${planningMachine.client_id}/${moment(planningMachine.date_time_in).format('HH:mm:ss')}/${dateTimeOut.format('HH:mm:ss')}`))?.data?.data
         const totalNoPlanMachine = noPlanMachines.filter(item => (item?.day?.toLowerCase() == moment().format('dddd')?.toLowerCase())).map(noPlanMachine => {
           const timeStart = Hms.clone().startOf('hour').format('HH:mm:ss');
@@ -355,7 +359,8 @@ export class ProductionService {
 
         
         let time = moment(planningMachine.date_time_in)?.hour(this.hour)?.minute(0)?.add(value, 'hour').format('HH:mm');
-        let duration = 60 - (moment(time, 'HH').format('HH') == moment(planningMachine.date_time_in).format('HH') ? moment(planningMachine.date_time_in).get('minute') : 0) - totalNoPlanMachine
+        // let duration = 60 - (moment(time, 'HH').format('HH') == moment(planningMachine.date_time_in).format('HH') ? moment(planningMachine.date_time_in).get('minute') : 0) - totalNoPlanMachine
+        let duration = totalHour - totalNoPlanMachine
         
         let target = Math.round((totalHour - totalNoPlanMachine) * planningMachine.qty_per_minute);
         let actual = production ? production.qty_actual : 0;
